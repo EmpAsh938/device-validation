@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "780397038154",
+    "project_id": "shaped-fx-416813",
+    "storage_bucket": "shaped-fx-416813.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:780397038154:android:a7f4057c23e4132df9f4b3",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlqqa7QLW-AGkfLrJ6-bTLobIA_CBUaiI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
