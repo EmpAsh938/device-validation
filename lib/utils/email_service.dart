@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 String generatePassword() {
   final Random random = Random();
-  const String chars = 'AaBbCcDdEeFfGgHh1234567890';
+  const String chars = 'AaBbCcDdEeFfGgHh1234567890@#_';
   return List.generate(8, (index) => chars[random.nextInt(chars.length)])
       .join();
 }

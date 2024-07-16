@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_application_1/pages/login_page.dart';
 import 'package:flutter_application_1/utils/session.dart';
 
 class HomePage extends StatelessWidget {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  HomePage({super.key});
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
-        actions: <Widget>[
+        title: const Text('Home Page'),
+        actions: [
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await _auth.signOut();
               await clearSession();
               if (context.mounted) {
-                Navigator.of(context).pushReplacementNamed('/');
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
               }
             },
           ),

@@ -1,6 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/api/auth.dart';
+import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/pages/home_page.dart';
 import 'package:flutter_application_1/pages/registration_page.dart';
 import 'package:flutter_application_1/utils/device_info.dart';
@@ -16,7 +16,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -45,13 +44,13 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () => _login(context),
                   child: const Text('Login'),
                 ),
-                const SizedBox(
-                  width: 20,
-                ),
+                const SizedBox(width: 20),
                 ElevatedButton(
-                  onPressed: () => {
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(
-                        builder: (context) => const RegistrationPage()))
+                  onPressed: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                          builder: (context) => const RegistrationPage()),
+                    );
                   },
                   child: const Text('Register'),
                 ),
@@ -65,88 +64,33 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _login(BuildContext context) async {
     try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
+      final email = _emailController.text;
+      final password = _passwordController.text;
+      final deviceInfo = await getDeviceInfo();
+
+      final response = await ApiService.loginUser(
+        email,
+        password,
+        deviceInfo['deviceId'].toString(),
+        deviceInfo['model'].toString(),
       );
-      String userId = userCredential.user?.uid ?? '';
-
-      // Check account status
-      bool isStatusValid = await checkAccountStatus(userId);
-      if (!isStatusValid) {
-        throw Exception('Account is pending or has expired');
-      }
-
-      // Get current device info
-      Map<String, dynamic> currentDeviceInfo = await getDeviceInfo();
-
-      // Check and save device info
-      bool isDeviceValid =
-          await checkAndSaveDeviceInfo(userId, currentDeviceInfo);
-      if (!isDeviceValid) {
-        throw Exception('This device is not authorized to log in');
-      }
-
-      // Save session
-      await saveSession(userId);
-      if (context.mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => HomePage()),
-        );
+      if (response['message'] == 'Login successful. Device registered.' ||
+          response['message'] == 'Login successful.') {
+        final user = User.fromJson(response['user']);
+        await saveSession(user.toString());
+        if (context.mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        }
+      } else {
+        throw Exception(response['message']);
       }
     } catch (e) {
-      // Handle error
       if (context.mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(e.toString())));
       }
     }
-  }
-
-  Future<bool> checkAccountStatus(String userId) async {
-    final DocumentSnapshot userDoc =
-        await FirebaseFirestore.instance.collection('users').doc(userId).get();
-
-    if (userDoc.exists) {
-      final String status = userDoc['status'];
-      final DateTime registrationDate = userDoc['registrationDate'].toDate();
-      final DateTime expiryDate =
-          registrationDate.add(const Duration(days: 365));
-
-      if (status == 'approved' && DateTime.now().isBefore(expiryDate)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  Future<bool> checkAndSaveDeviceInfo(
-      String userId, Map<String, dynamic> currentDeviceInfo) async {
-    final DocumentSnapshot userDoc =
-        await FirebaseFirestore.instance.collection('users').doc(userId).get();
-
-    if (userDoc.exists) {
-      final data = userDoc.data() as Map<String, dynamic>?;
-      if (data != null && data.containsKey('deviceInfo')) {
-        // Device info already exists, check against it
-        final Map<String, dynamic> savedDeviceInfo = data['deviceInfo'];
-        if (savedDeviceInfo['deviceId'] == currentDeviceInfo['deviceId'] &&
-            savedDeviceInfo['model'] == currentDeviceInfo['model']) {
-          // Device matches
-          return true;
-        } else {
-          // Device does not match
-          return false;
-        }
-      } else {
-        // No device info saved yet, save current device info
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .update({'deviceInfo': currentDeviceInfo});
-        return true;
-      }
-    }
-    return false;
   }
 }

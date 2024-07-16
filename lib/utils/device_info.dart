@@ -28,7 +28,7 @@ Future<Map<String, dynamic>> getDeviceInfo() async {
     deviceData['wifiBSSID'] = wifiBSSID;
     deviceData['wifiIP'] = wifiIP;
   } catch (e) {
-    print('Failed to get device info');
+    throw Exception('Failed to get device info');
   }
 
   return deviceData;
